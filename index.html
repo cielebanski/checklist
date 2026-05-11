@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="pl"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checklista Kite</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f2ec;
+    --surface: #faf8f4;
+    --border: #dedad2;
+    --text: #1a1814;
+    --muted: #8a8680;
+    --accent: #1a6b4a;
+    --accent-light: #e6f2ec;
+    --done-line: #b0ada8;
+    --radius: 10px;
+  }
+
+  body {
+    background: var(--bg);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 48px 16px;
+    color: var(--text);
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 420px;
+    overflow: hidden;
+  }
+
+  .header {
+    padding: 28px 28px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .title {
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: -0.3px;
+  }
+
+  .tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: var(--accent-light);
+    padding: 4px 10px;
+    border-radius: 99px;
+    letter-spacing: 0.05em;
+  }
+
+  .progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .bar-bg {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 4px;
+    background: var(--accent);
+    border-radius: 99px;
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+
+  .progress-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    min-width: 48px;
+    text-align: right;
+  }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    text-transform: uppercase;
+    padding: 16px 28px 8px;
+  }
+
+  .items {
+    padding: 0 12px 12px;
+  }
+
+  .item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background 0.1s;
+    user-select: none;
+  }
+
+  .item:hover { background: rgba(0,0,0,0.03); }
+
+  .item.done .item-label {
+    color: var(--done-line);
+    text-decoration: line-through;
+    text-decoration-color: var(--done-line);
+  }
+
+  .checkbox {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 1.5px solid var(--border);
+    background: white;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+  }
+
+  .item.done .checkbox {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .checkmark {
+    display: none;
+    width: 12px;
+    height: 12px;
+  }
+
+  .item.done .checkmark { display: block; }
+
+  .item-label {
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--text);
+    transition: color 0.15s;
+  }
+
+  .footer {
+    border-top: 1px solid var(--border);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .reset-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 0;
+    letter-spacing: 0.04em;
+    transition: color 0.15s;
+  }
+
+  .reset-btn:hover { color: var(--text); }
+
+  .done-msg {
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .done-msg.visible { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="header">
+    <div class="header-top">
+      <h1 class="title">Pakowanie</h1>
+      <span class="tag">kite</span>
+    </div>
+    <div class="progress-wrap">
+      <div class="bar-bg"><div class="bar-fill" id="bar" style="width: 0%;"></div></div>
+      <span class="progress-label" id="prog">0 / 15</span>
+    </div>
+  </div>
+
+  <div class="section-label">Sprzęt</div>
+  <div class="items" id="list"><div class="item" role="checkbox" aria-checked="false" tabindex="0">
+      <div class="checkbox">
+        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
+          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        </svg>
+      </div>
+      <span class="item-label">Latawiec</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
+      <div class="checkbox">
+        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
+          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        </svg>
+      </div>
+      <span class="item-label">Bar</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
+      <div class="checkbox">
+        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
+          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        </svg>
+      </div>
+      <span class="item-label">Pompa</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
+      <div class="checkbox">
+        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
+          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        </svg>
+      </div>
+      <span class="item-label">Deska</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
+      <div class="checkbox">
+        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
+          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        </svg>
+      </div>
+      <span class="item-label">Trapez</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
+      <div class="checkbox">
+        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
+          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        </svg>
+      </div>
+      <span class="item-label">Pianka</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
+      <div class="checkbox">
+        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
+          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        </svg>
+      </div>
+      <span class="item-label">Buty</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
+      <div class="checkbox">
+        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
+          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        </svg>
+      </div>
+      <span class="item-label">Rękawiczki</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
+      <div class="checkbox">
+        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
+          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        </svg>
+      </div>
+      <span class="item-label">Czapka</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
+      <div class="checkbox">
+        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
+          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        </svg>
+      </div>
+      <span class="item-label">Kamizelka</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
+      <div class="checkbox">
+        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
+          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        </svg>
+      </div>
+      <span class="item-label">Krem UV</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
+      <div class="checkbox">
+        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
+          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        </svg>
+      </div>
+      <span class="item-label">Okulary</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
+      <div class="checkbox">
+        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
+          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        </svg>
+      </div>
+      <span class="item-label">Ręczniki</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
+      <div class="checkbox">
+        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
+          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        </svg>
+      </div>
+      <span class="item-label">Torba na mokre</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
+      <div class="checkbox">
+        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
+          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        </svg>
+      </div>
+      <span class="item-label">Etui do telefonu</span></div></div>
+
+  <div class="footer">
+    <button class="reset-btn" onclick="resetAll()">↺ reset</button>
+    <span class="done-msg" id="done-msg">Gotowe — czas na wodę!</span>
+  </div>
+</div>
+
+<script>
+const items = [
+  "Latawiec","Bar","Pompa","Deska","Trapez",
+  "Pianka","Buty","Rękawiczki","Czapka","Kamizelka",
+  "Krem UV","Okulary","Ręczniki","Torba na mokre","Etui do telefonu"
+];
+
+const state = items.map(() => false);
+
+function render() {
+  const list = document.getElementById('list');
+  list.innerHTML = '';
+  items.forEach((label, i) => {
+    const div = document.createElement('div');
+    div.className = 'item' + (state[i] ? ' done' : '');
+    div.setAttribute('role', 'checkbox');
+    div.setAttribute('aria-checked', state[i]);
+    div.setAttribute('tabindex', '0');
+    div.innerHTML = `
+      <div class="checkbox">
+        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
+          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <span class="item-label">${label}</span>`;
+    div.onclick = () => { state[i] = !state[i]; render(); };
+    div.onkeydown = e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); state[i] = !state[i]; render(); }};
+    list.appendChild(div);
+  });
+  const done = state.filter(Boolean).length;
+  const total = items.length;
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('bar').style.width = pct + '%';
+  document.getElementById('prog').textContent = done + ' / ' + total;
+  const msg = document.getElementById('done-msg');
+  msg.classList.toggle('visible', done === total);
+}
+
+function resetAll() { state.fill(false); render(); }
+
+render();
+</script>
+
+
+</body></html>
