@@ -1,8 +1,10 @@
 <!DOCTYPE html>
-<html lang="pl"><head>
+<html lang="pl">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Checklista Kite</title>
+<title>Checklista</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap');
 
@@ -18,6 +20,23 @@
     --accent-light: #e6f2ec;
     --done-line: #b0ada8;
     --radius: 10px;
+    --tab-active-bg: #faf8f4;
+    --tab-inactive-bg: #ede9e2;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1814;
+      --surface: #222018;
+      --border: #3a3730;
+      --text: #f0ede6;
+      --muted: #7a776f;
+      --accent: #3db87a;
+      --accent-light: #1a3328;
+      --done-line: #555250;
+      --tab-active-bg: #222018;
+      --tab-inactive-bg: #1a1814;
+    }
   }
 
   body {
@@ -40,32 +59,44 @@
     overflow: hidden;
   }
 
-  .header {
-    padding: 28px 28px 20px;
+  .tabs {
+    display: flex;
     border-bottom: 1px solid var(--border);
   }
 
-  .header-top {
+  .tab {
+    flex: 1;
+    padding: 14px 0;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    cursor: pointer;
+    background: var(--tab-inactive-bg);
+    color: var(--muted);
+    border: none;
+    transition: all 0.15s;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
+    justify-content: center;
+    gap: 7px;
+    letter-spacing: -0.1px;
+    font-family: 'DM Sans', sans-serif;
   }
 
-  .title {
-    font-size: 20px;
-    font-weight: 500;
-    letter-spacing: -0.3px;
+  .tab:first-child { border-radius: 16px 0 0 0; }
+  .tab:last-child  { border-radius: 0 16px 0 0; }
+
+  .tab.active {
+    background: var(--tab-active-bg);
+    color: var(--text);
+    border-bottom: 2px solid var(--accent);
   }
 
-  .tag {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--accent);
-    background: var(--accent-light);
-    padding: 4px 10px;
-    border-radius: 99px;
-    letter-spacing: 0.05em;
+  .tab i { font-size: 17px; }
+
+  .header {
+    padding: 20px 28px 16px;
+    border-bottom: 1px solid var(--border);
   }
 
   .progress-wrap {
@@ -105,12 +136,10 @@
     letter-spacing: 0.12em;
     color: var(--muted);
     text-transform: uppercase;
-    padding: 16px 28px 8px;
+    padding: 14px 28px 6px;
   }
 
-  .items {
-    padding: 0 12px 12px;
-  }
+  .items { padding: 0 12px 10px; }
 
   .item {
     display: flex;
@@ -123,7 +152,7 @@
     user-select: none;
   }
 
-  .item:hover { background: rgba(0,0,0,0.03); }
+  .item:hover { background: rgba(128, 128, 128, 0.06); }
 
   .item.done .item-label {
     color: var(--done-line);
@@ -136,7 +165,7 @@
     height: 22px;
     border-radius: 6px;
     border: 1.5px solid var(--border);
-    background: white;
+    background: var(--surface);
     flex-shrink: 0;
     display: flex;
     align-items: center;
@@ -149,12 +178,7 @@
     border-color: var(--accent);
   }
 
-  .checkmark {
-    display: none;
-    width: 12px;
-    height: 12px;
-  }
-
+  .checkmark { display: none; width: 12px; height: 12px; }
   .item.done .checkmark { display: block; }
 
   .item-label {
@@ -166,7 +190,7 @@
 
   .footer {
     border-top: 1px solid var(--border);
-    padding: 14px 28px;
+    padding: 13px 28px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -195,163 +219,159 @@
   }
 
   .done-msg.visible { opacity: 1; }
+
+  .pane { display: none; }
+  .pane.active { display: block; }
 </style>
 </head>
 <body>
 
 <div class="card">
-  <div class="header">
-    <div class="header-top">
-      <h1 class="title">Pakowanie</h1>
-      <span class="tag">kite</span>
-    </div>
-    <div class="progress-wrap">
-      <div class="bar-bg"><div class="bar-fill" id="bar" style="width: 0%;"></div></div>
-      <span class="progress-label" id="prog">0 / 15</span>
-    </div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('kite', this)" aria-label="Kitesurfing">
+      <i class="ti ti-wind" aria-hidden="true"></i> Kitesurfing
+    </button>
+    <button class="tab" onclick="switchTab('camper', this)" aria-label="Campervan">
+      <i class="ti ti-camper" aria-hidden="true"></i> Campervan
+    </button>
   </div>
 
-  <div class="section-label">Sprzęt</div>
-  <div class="items" id="list"><div class="item" role="checkbox" aria-checked="false" tabindex="0">
-      <div class="checkbox">
-        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
-          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
-        </svg>
+  <div id="pane-kite" class="pane active">
+    <div class="header">
+      <div class="progress-wrap">
+        <div class="bar-bg"><div class="bar-fill" id="bar-kite"></div></div>
+        <span class="progress-label" id="prog-kite">0 / 0</span>
       </div>
-      <span class="item-label">Latawiec</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
-      <div class="checkbox">
-        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
-          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
-        </svg>
+    </div>
+    <div class="section-label">Sprzęt</div>
+    <div class="items" id="list-kite"></div>
+  </div>
+
+  <div id="pane-camper" class="pane">
+    <div class="header">
+      <div class="progress-wrap">
+        <div class="bar-bg"><div class="bar-fill" id="bar-camper"></div></div>
+        <span class="progress-label" id="prog-camper">0 / 0</span>
       </div>
-      <span class="item-label">Bar</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
-      <div class="checkbox">
-        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
-          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
-        </svg>
-      </div>
-      <span class="item-label">Pompa</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
-      <div class="checkbox">
-        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
-          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
-        </svg>
-      </div>
-      <span class="item-label">Deska</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
-      <div class="checkbox">
-        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
-          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
-        </svg>
-      </div>
-      <span class="item-label">Trapez</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
-      <div class="checkbox">
-        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
-          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
-        </svg>
-      </div>
-      <span class="item-label">Pianka</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
-      <div class="checkbox">
-        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
-          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
-        </svg>
-      </div>
-      <span class="item-label">Buty</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
-      <div class="checkbox">
-        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
-          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
-        </svg>
-      </div>
-      <span class="item-label">Rękawiczki</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
-      <div class="checkbox">
-        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
-          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
-        </svg>
-      </div>
-      <span class="item-label">Czapka</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
-      <div class="checkbox">
-        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
-          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
-        </svg>
-      </div>
-      <span class="item-label">Kamizelka</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
-      <div class="checkbox">
-        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
-          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
-        </svg>
-      </div>
-      <span class="item-label">Krem UV</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
-      <div class="checkbox">
-        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
-          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
-        </svg>
-      </div>
-      <span class="item-label">Okulary</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
-      <div class="checkbox">
-        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
-          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
-        </svg>
-      </div>
-      <span class="item-label">Ręczniki</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
-      <div class="checkbox">
-        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
-          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
-        </svg>
-      </div>
-      <span class="item-label">Torba na mokre</span></div><div class="item" role="checkbox" aria-checked="false" tabindex="0">
-      <div class="checkbox">
-        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
-          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline>
-        </svg>
-      </div>
-      <span class="item-label">Etui do telefonu</span></div></div>
+    </div>
+    <div class="section-label">Na drogę</div>
+    <div class="items" id="list-camper"></div>
+  </div>
 
   <div class="footer">
-    <button class="reset-btn" onclick="resetAll()">↺ reset</button>
-    <span class="done-msg" id="done-msg">Gotowe — czas na wodę!</span>
+    <button class="reset-btn" onclick="resetCurrent()">↺ reset</button>
+    <span class="done-msg" id="done-msg">Gotowe!</span>
   </div>
 </div>
 
 <script>
-const items = [
-  "Latawiec","Bar","Pompa","Deska","Trapez",
-  "Pianka","Buty","Rękawiczki","Czapka","Kamizelka",
-  "Krem UV","Okulary","Ręczniki","Torba na mokre","Etui do telefonu"
-];
+  const LISTS = {
+    kite: [
+      "Latawiec", "Bar", "Pompa", "Deska", "Trapez",
+      "Pianka", "Buty", "Rękawiczki", "Czapka", "Kamizelka",
+      "Krem UV", "Okulary", "Ręczniki", "Torba na mokre", "Etui do telefonu"
+    ],
+    camper: [
+      "Dowód rejestracyjny", "OC/ubezpieczenie", "Prawo jazdy", "Klucze zapasowe",
+      "Apteczka", "Gaśnica", "Trójkąt ostrzegawczy", "Mapa offline",
+      "Ładowarka do telefonu", "Adapter prądu 230V", "Śpiwory", "Poduszki",
+      "Ręczniki", "Naczynia i sztućce", "Deska do krojenia",
+      "Kuchenka / butla gazu", "Pojemnik na wodę",
+      "Biodegradowalne mydło", "Papier toaletowy", "Kosz na śmieci"
+    ]
+  };
 
-const state = items.map(() => false);
+  const DONE_MSGS = {
+    kite: "Gotowe — czas na wodę!",
+    camper: "Gotowe — ruszamy w trasę!"
+  };
 
-function render() {
-  const list = document.getElementById('list');
-  list.innerHTML = '';
-  items.forEach((label, i) => {
-    const div = document.createElement('div');
-    div.className = 'item' + (state[i] ? ' done' : '');
-    div.setAttribute('role', 'checkbox');
-    div.setAttribute('aria-checked', state[i]);
-    div.setAttribute('tabindex', '0');
-    div.innerHTML = `
-      <div class="checkbox">
-        <svg class="checkmark" viewBox="0 0 12 12" fill="none">
-          <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <span class="item-label">${label}</span>`;
-    div.onclick = () => { state[i] = !state[i]; render(); };
-    div.onkeydown = e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); state[i] = !state[i]; render(); }};
-    list.appendChild(div);
-  });
-  const done = state.filter(Boolean).length;
-  const total = items.length;
-  const pct = Math.round((done / total) * 100);
-  document.getElementById('bar').style.width = pct + '%';
-  document.getElementById('prog').textContent = done + ' / ' + total;
-  const msg = document.getElementById('done-msg');
-  msg.classList.toggle('visible', done === total);
-}
+  const KEY = tab => `checklist_${tab}`;
 
-function resetAll() { state.fill(false); render(); }
+  function loadState(tab) {
+    try {
+      const raw = localStorage.getItem(KEY(tab));
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return LISTS[tab].map(() => false);
+  }
 
-render();
+  function saveState(tab, state) {
+    try { localStorage.setItem(KEY(tab), JSON.stringify(state)); } catch (e) {}
+  }
+
+  const states = {
+    kite: loadState('kite'),
+    camper: loadState('camper')
+  };
+
+  let currentTab = 'kite';
+
+  function renderTab(tab) {
+    const items = LISTS[tab];
+    const state = states[tab];
+    const list = document.getElementById('list-' + tab);
+    list.innerHTML = '';
+
+    items.forEach((label, i) => {
+      const div = document.createElement('div');
+      div.className = 'item' + (state[i] ? ' done' : '');
+      div.setAttribute('role', 'checkbox');
+      div.setAttribute('aria-checked', state[i]);
+      div.setAttribute('tabindex', '0');
+      div.innerHTML = `
+        <div class="checkbox">
+          <svg class="checkmark" viewBox="0 0 12 12" fill="none">
+            <polyline points="1.5,6 4.5,9.5 10.5,2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span class="item-label">${label}</span>`;
+      const toggle = () => {
+        state[i] = !state[i];
+        saveState(tab, state);
+        renderTab(tab);
+      };
+      div.onclick = toggle;
+      div.onkeydown = e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); } };
+      list.appendChild(div);
+    });
+
+    const done = state.filter(Boolean).length;
+    const total = items.length;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    document.getElementById('bar-' + tab).style.width = pct + '%';
+    document.getElementById('prog-' + tab).textContent = done + ' / ' + total;
+
+    if (tab === currentTab) {
+      const msg = document.getElementById('done-msg');
+      msg.textContent = DONE_MSGS[tab];
+      msg.classList.toggle('visible', done === total && total > 0);
+    }
+  }
+
+  function switchTab(tab, btn) {
+    currentTab = tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+    document.getElementById('pane-' + tab).classList.add('active');
+    const state = states[tab];
+    const total = LISTS[tab].length;
+    const done = state.filter(Boolean).length;
+    const msg = document.getElementById('done-msg');
+    msg.textContent = DONE_MSGS[tab];
+    msg.classList.toggle('visible', done === total && total > 0);
+  }
+
+  function resetCurrent() {
+    states[currentTab] = LISTS[currentTab].map(() => false);
+    saveState(currentTab, states[currentTab]);
+    renderTab(currentTab);
+  }
+
+  renderTab('kite');
+  renderTab('camper');
 </script>
 
-
-</body></html>
+</body>
+</html>
