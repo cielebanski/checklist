@@ -137,6 +137,13 @@
     color: var(--muted);
     text-transform: uppercase;
     padding: 14px 28px 6px;
+    min-height: 40px;
+  }
+
+  .header-done {
+    color: var(--done-line);
+    text-decoration: line-through;
+    text-decoration-color: var(--done-line);
   }
 
   .items { padding: 0 12px 10px; }
@@ -228,10 +235,10 @@
 
 <div class="card">
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('kite', this)" aria-label="Kitesurfing">
+    <button class="tab btn-kite" onclick="switchTab('kite', this)" aria-label="Kitesurfing">
       <i class="ti ti-wind" aria-hidden="true"></i> Kitesurfing
     </button>
-    <button class="tab" onclick="switchTab('camper', this)" aria-label="Campervan">
+    <button class="tab btn-camper" onclick="switchTab('camper', this)" aria-label="Campervan">
       <i class="ti ti-camper" aria-hidden="true"></i> Campervan
     </button>
   </div>
@@ -265,40 +272,93 @@
 </div>
 
 <script>
-  const LISTS = {
-    kite: [
-      "Latawiec", "Bar", "Pompa", "Deska", "Trapez",
-      "Pianka", "Buty", "Rękawiczki", "Czapka", "Kamizelka",
-      "Krem UV", "Okulary", "Ręczniki", "Torba na mokre", "Etui do telefonu"
-    ],
-    camper: [
-      "Dowód rejestracyjny", "OC/ubezpieczenie", "Prawo jazdy", "Klucze zapasowe",
-      "Apteczka", "Gaśnica", "Trójkąt ostrzegawczy",
-      "Kable iphone 2", "Kabel usb-c", "Baterie do aparatu", 
-      "Aparat", "Poduszki", "Kołdra", "Koc",
-      "Ręczniki", "Naczynia i sztućce", "Deska do krojenia", "Uchwyt do patelni",
-      "Kuchenka", "3 kartusze z gazem", "Papier toaletowy", "Worki na śmieci",
-      "Lewarek", "Klucz do koła" 
+  const LISTS = [{
+        id: "kite",
+        name: "Kite",
+        value: [
+            "Latawiec", "Bar", "Pompa", "Deska", "Trapez",
+            "Pianka", "Buty", "Rękawiczki", "Czapka", "Kamizelka",
+            "Krem UV", "Okulary", "Ręczniki", "Torba na mokre", "Etui do telefonu"
+        ]
+    },
+    {
+        id: "camper",
+        name: "Camper",
+        value: [
+            {
+                name: "Van",
+                value: [
+                    "Dowód rejestracyjny", "OC/ubezpieczenie", "Prawo jazdy", "Klucze zapasowe",
+                    "Apteczka", "Gaśnica", "Trójkąt ostrzegawczy",
+                    "Lewarek", "Klucz do koła" 
+                ],
+            },
+            {
+                name: "Elektronika",
+                value: [
+                    "Aparat", "Kindle",
+                    "Kable iphone 2", "Kabel usb-c", "Baterie do aparatu",
+                    "Ładowarki zapalniczkowe",
+                    "Ładowarka 220V"
+                ]
+            },
+            { 
+                name: "Kuchnia", 
+                value: [
+                    "Patelnia", "Czajnik", "Garnek", "Sztućce", "Deska do krojenia", "Uchwyt do patelni",
+                    "Kuchenka", "3 kartusze z gazem", "Worki na śmieci",
+                ] 
+            },
+            { 
+                name: "Jedzenie", 
+                value: [
+                    "Sól",
+                    "Pieprz",
+                    "Przyprawy",
+                    "Pomidory w puszcze",
+                    "Fasola w puszcze"
+                ] 
+            },
+            {
+                name: "Spanie",
+                value: [
+                    "Poduszki", "Kołdra", "Koc",
+                ],
+            },
+            {
+                name: "Łazienka",
+                value: [
+                    "Ręczniki", 
+                    "Papier toaletowy",
+                    "Kosmetyczki"
+                ]
+            }
+        
     ]
-  };
+  }];
 
   const DONE_MSGS = {
     kite: "Gotowe — czas na wodę!",
     camper: "Gotowe — ruszamy w trasę!"
   };
 
-  const KEY = tab => `checklist_${tab}`;
+  const KEY = tab => `checklist__${tab}`;
 
   function loadState(tab) {
     try {
       const raw = localStorage.getItem(KEY(tab));
       if (raw) return JSON.parse(raw);
     } catch (e) {}
-    return LISTS[tab].map(() => false);
+
+    return [];
   }
 
   function saveState(tab, state) {
     try { localStorage.setItem(KEY(tab), JSON.stringify(state)); } catch (e) {}
+  }
+
+  function saveActiveTab(tab) {
+    try { localStorage.setItem(KEY("currentTab"), tab); } catch (e) {}
   }
 
   const states = {
@@ -306,17 +366,115 @@
     camper: loadState('camper')
   };
 
-  let currentTab = 'kite';
+  let currentTab = loadCurrentTab();
+
+  function loadCurrentTab() {
+    try {
+      const tab = localStorage.getItem(KEY('currentTab'));
+      if (tab) return tab;
+    } catch (e) {}
+
+    return 'camper';
+  }
+
+  let subHeaderState = loadSubheadState();
+
+  function saveSubheadState(subHeaderState) {
+    try { localStorage.setItem(KEY("subheadState"), JSON.stringify(subHeaderState)); } catch (e) {}
+  }
+
+  function loadSubheadState () {
+    try {
+      const raw = localStorage.getItem(KEY("subheadState"));
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+
+    return {};
+  }
 
   function renderTab(tab) {
-    const items = LISTS[tab];
+    const items = LISTS.find((l) => l.id === tab)?.value;
     const state = states[tab];
+
     const list = document.getElementById('list-' + tab);
     list.innerHTML = '';
 
+    if (typeof items[0] !== "string") {
+
+        const totalCount = getListItemsFlat(tab).length;
+
+        items.forEach(element => {
+            const doneCount = element.value.reduce((acc, item) => {
+                if (state.find(i => item === i)) {
+                    return acc + 1;
+                } else {
+                    return acc;
+                }
+            }, 0);
+
+            const subHeader = element.name;
+            const div = document.createElement('div');
+            const listId = 'list-' + subHeader + tab;
+            div.setAttribute('id', listId)
+
+            const subHeadElem = document.createElement('div')
+            subHeadElem.classList.add('section-label')
+            
+            const isOpen = !subHeaderState[listId] || subHeaderState[listId] === 'on';
+
+            if (doneCount === element.value.length) {
+                subHeadElem.classList.add('header-done');
+            }
+
+            subHeadElem.onclick = function ()  {
+                if (isOpen) {
+                    subHeaderState[listId] = 'off';
+                } else {
+                    subHeaderState[listId] = 'on';
+                }
+                saveSubheadState(subHeaderState);
+                renderTab(tab);
+            }
+
+            subHeadElem.innerHTML = subHeader;
+            
+            const progress = document.createElement("span");
+            progress.setAttribute('class', ".progress-label");
+            progress.innerHTML = " " + doneCount + "/" + element.value.length;
+            
+
+            subHeadElem.appendChild(progress);
+            
+            const chev = document.createElement('span');
+            chev.innerHTML = (isOpen ? " ▼ " : " ► ");
+            subHeadElem.appendChild(chev);
+
+            div.appendChild(subHeadElem);
+
+            list.appendChild(div);
+
+            renderTabItems(tab, state, element.value, listId, totalCount);
+        });
+    } else {
+        const subHeader = '';
+        const listId = 'list-' + tab;
+        renderTabItems(tab, state, items, listId, items.length);
+    }
+
+  }
+
+  function renderTabItems(tab, state, items, listId, totalCount) {
+      if (subHeaderState[listId] === 'off') {
+          return;
+      }
+    const list = document.getElementById(listId);
+
+    let mutableState = [...state];
+
     items.forEach((label, i) => {
+      const selected = mutableState.find(s => s === label);
       const div = document.createElement('div');
-      div.className = 'item' + (state[i] ? ' done' : '');
+      div.className = 'item' + (!!selected ? ' done' : '');
       div.setAttribute('role', 'checkbox');
       div.setAttribute('aria-checked', state[i]);
       div.setAttribute('tabindex', '0');
@@ -328,8 +486,15 @@
         </div>
         <span class="item-label">${label}</span>`;
       const toggle = () => {
-        state[i] = !state[i];
-        saveState(tab, state);
+        if (selected) {
+            mutableState = state.filter(s => s !== label);
+            console.log("filter out", mutableState);
+        } else {
+            mutableState = [...state, label]
+            console.log("filter in", mutableState);
+        }
+        states[tab] = mutableState;
+        saveState(tab, mutableState);
         renderTab(tab);
       };
       div.onclick = toggle;
@@ -337,41 +502,59 @@
       list.appendChild(div);
     });
 
-    const done = state.filter(Boolean).length;
-    const total = items.length;
-    const pct = total ? Math.round((done / total) * 100) : 0;
+    const done = state.length;
+    const pct = totalCount ? Math.round((done / totalCount) * 100) : 0;
     document.getElementById('bar-' + tab).style.width = pct + '%';
-    document.getElementById('prog-' + tab).textContent = done + ' / ' + total;
+    document.getElementById('prog-' + tab).textContent = done + ' / ' + totalCount;
 
     if (tab === currentTab) {
       const msg = document.getElementById('done-msg');
       msg.textContent = DONE_MSGS[tab];
-      msg.classList.toggle('visible', done === total && total > 0);
+      msg.classList.toggle('visible', done === totalCount && totalCount > 0);
     }
   }
 
-  function switchTab(tab, btn) {
+  function switchTab(tab) {
     currentTab = tab;
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    btn.classList.add('active');
+    document.getElementsByClassName('btn-' + tab)[0].classList.add('active')
+
+    // btn.classList.add('active');
     document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
     document.getElementById('pane-' + tab).classList.add('active');
     const state = states[tab];
-    const total = LISTS[tab].length;
-    const done = state.filter(Boolean).length;
+    const total = getListItemsFlat(tab).length;
+    const done = state.length;
     const msg = document.getElementById('done-msg');
     msg.textContent = DONE_MSGS[tab];
     msg.classList.toggle('visible', done === total && total > 0);
+
+    saveActiveTab(tab);
   }
 
   function resetCurrent() {
-    states[currentTab] = LISTS[currentTab].map(() => false);
+    states[currentTab] = [];
     saveState(currentTab, states[currentTab]);
     renderTab(currentTab);
   }
 
+  function getListItemsFlat(tab) {
+    const items =  LISTS.find(l => l.id === tab).value;
+    if (typeof items[0] === "string") {
+        return items;
+    } else {
+        let list = [];
+        items.forEach(i => {
+            list.push(...i.value);
+        })
+        return list;
+    }
+  }
+
+  switchTab(currentTab);
   renderTab('kite');
   renderTab('camper');
+
 </script>
 
 </body>
